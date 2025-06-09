@@ -13,7 +13,7 @@
     "petname": "Qwerty",
     "farmcavechoicemushrooms": true,
     "communitycenterrun": true,
-    "timeOfDayToSleep": 2200,
+    "timeOfDayToSleep": 700,
     "lockPlayerChests": false,
     "clientsCanPause": false,
     "copyInviteCodeToClipboard": true,
