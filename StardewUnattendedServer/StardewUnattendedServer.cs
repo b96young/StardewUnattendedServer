@@ -1670,7 +1670,7 @@ namespace StardewUnattendedServer
         private void OnSaving(object? sender, SavingEventArgs e)
         {
             // After shipping menu is clicked, set to false to stop clicking after game is saved
-            shippingMenuActive = true;
+            shippingMenuActive = false;
             if (!IsEnabled) // server toggle
                 return;
         }
