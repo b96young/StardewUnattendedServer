@@ -37,7 +37,6 @@ namespace StardewUnattendedServer
 
         //debug tools
         private bool debug;
-        private bool shippingMenuActive = false;
 
         private readonly Dictionary<string, int> PreviousFriendships = new Dictionary<string, int>();  //stores friendship values
 
@@ -104,7 +103,11 @@ namespace StardewUnattendedServer
         SDate danceOfJelliesForReset = new SDate(28, "summer");
         SDate spiritsEveForReset = new SDate(27, "fall");
         //////////////////////////
-
+        
+        //handle shipping menu
+        private bool shippingMenuActive = false;
+        private int shippingMenuClickDelay = 60; // Prevents click spam waiting for shipping menu to load (game tick delay, 1 tick = 1/60s)
+        private int shippingMenuTicksUntilClick = 0;
 
 
 
@@ -117,7 +120,7 @@ namespace StardewUnattendedServer
             helper.ConsoleCommands.Add("debug_server", "Turns debug mode on/off, lets server run when no players are connected", this.DebugToggle);
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
-            helper.Events.GameLoop.DayEnding += this.OnDayEnding;  // Shipping Menu handling (combined with OneSecondUpdateTicked & OnSaving)
+            helper.Events.GameLoop.DayEnding += this.OnDayEnding;  // Shipping Menu handling (combined with OnUpdateTicked & OnSaving)
             helper.Events.GameLoop.Saving += this.OnSaving;
             helper.Events.GameLoop.OneSecondUpdateTicked += this.OnOneSecondUpdateTicked; //game tick event handler
             helper.Events.GameLoop.TimeChanged += this.OnTimeChanged; // Time of day change handler
@@ -1035,22 +1038,33 @@ namespace StardewUnattendedServer
                 // If shipping menu is on the screen, click OK
                 if (shippingMenuActive)
                 {
-                    // Check if the active menu is the ShippingMenu
-                    if (Game1.activeClickableMenu is ShippingMenu shippingMenu)
+                    //Wait shippingMenuDelay before clicking
+                    if (shippingMenuTicksUntilClick > 0)
                     {
-                        this.Monitor.Log("Shipping Menu detected, preparing to click OK", LogLevel.Info);
-
-                        // Get the OK button from the ShippingMenu
-                        var okButton = shippingMenu.okButton;
-
-                        // If the button is available, simulate the click
-                        if (okButton != null)
+                        shippingMenuTicksUntilClick--;
+                    }
+                    else
+                    {
+                        // Check if the active menu is the ShippingMenu
+                        if (Game1.activeClickableMenu is ShippingMenu shippingMenu)
                         {
-                            this.Monitor.Log("Simulating OK button click", LogLevel.Info);
+                            this.Monitor.Log("Shipping Menu detected", LogLevel.Info);
 
-                            // Simulate a left-click action on the OK button
-                            shippingMenu.receiveLeftClick(okButton.bounds.X, okButton.bounds.Y, true);
+                            // Get the OK button from the ShippingMenu
+                            var okButton = shippingMenu.okButton;
 
+                            // If the button is available, simulate the click
+                            if (okButton != null)
+                            {
+                                this.Monitor.Log("Clicking OK on shipping menu", LogLevel.Info);
+
+                                // Simulate a left-click action on the OK button
+                                shippingMenu.receiveLeftClick(okButton.bounds.X, okButton.bounds.Y, true);
+
+                                // Reset the shipping menu click delay
+                                shippingMenuTicksUntilClick = shippingMenuClickDelay;
+
+                            }
                         }
                     }
                 }
